@@ -1,0 +1,15 @@
+# experiments/ — 모든 실험이 공유하는 Pluto 환경.
+# 각 실험 노트북은 Pkg.activate(joinpath(@__DIR__, "..")) 로 이 환경을 쓰고,
+# 첫 셀의 부트스트랩이 로컬 패키지(Dcinside, DcinsideAnalysis)를 dev 설치한다.
+# (로컬 패키지는 여기 [deps] 에 직접 적지 않는다 — 부트스트랩이 경로와 함께 추가)
+[deps]
+DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
+Dates = "ade2ca70-3891-5945-98fb-dc099432e06a"
+HypertextLiteral = "ac1192a8-f4b3-4bfe-ba22-af5b92cd3ab2"
+PlutoUI = "7f904dfe-b85e-4ff6-b463-dae2292396a8"
+
+[compat]
+DataFrames = "~1"
+HypertextLiteral = "~0.9, ~1"
+PlutoUI = "~0.7"
+julia = "1.10"
