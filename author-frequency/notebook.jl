@@ -36,6 +36,7 @@ end
 begin
     using PlutoUI
     using DataFrames
+    using Unicode            # base.dict 는 NFD 한글 — 파싱 전 NFC 정규화에 사용
     using Dcinside
     using DcinsideAnalysis   # Kiwi · Corpus · DcinsideDataFrames
 end
@@ -88,12 +89,16 @@ base.dict 의 `# ── 플랫폼·작품·인물 고유명사 ──` 섹션에
 
 base.dict 의 고유명사 섹션을 파싱해 키워드 후보를 반환.
 열: `form`, `canonical`, `entry_type` (:work/:author/:other)
+
+!!! note "NFD 정규화"
+    base.dict 는 NFD(조합형) 한글로 저장돼 있어, NFC 리터럴(`"작가"`/`"약칭"`)과
+    바이트 단위 비교 시 매칭되지 않는다. 각 줄을 `:NFC` 로 정규화해 흡수한다.
 """
 function parse_name_dict(path::AbstractString)
     rows = NamedTuple[]
     in_section = false
     for raw in eachline(path)
-        line = rstrip(raw)
+        line = Unicode.normalize(rstrip(raw), :NFC)
         if startswith(line, "#")
             # 섹션 경계: 고유명사 섹션 진입/이탈 판정
             if occursin("──", line)
@@ -114,8 +119,10 @@ function parse_name_dict(path::AbstractString)
 
         # alias 행이면 "원형/NNP" 에서 canonical 추출, 아니면 form 자신
         canonical = occursin('/', pos) ? String(split(pos, '/')[1]) : form
-        entry_type = occursin("작가", comment) ? :author :
-                     occursin("약칭", comment) ? :work : :other
+        # "약칭" 을 먼저 검사: 작품 제목 안의 "…작가…"(예: <백작가의 망나니>)가
+        # author 로 오분류되는 것을 막는다. 작가 주석에는 "약칭" 이 없다.
+        entry_type = occursin("약칭", comment) ? :work :
+                     occursin("작가", comment) ? :author : :other
         push!(rows, (form = form, canonical = canonical, entry_type = entry_type))
     end
     DataFrame(rows)
