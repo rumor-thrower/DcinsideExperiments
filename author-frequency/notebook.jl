@@ -86,19 +86,17 @@ md"""
 name_df = NameDict.parse(BASE_DICT)
 
 # ╔═╡ b000000c-000c-4000-8000-00000000000c
-md"""
-## 2. 코퍼스 수집 (TODO)
+md"## 2. 코퍼스 수집"
 
-```julia
-forms  = unique(name_df.form)
-corpus = Corpus.collect(api, gallery_name, forms; posts_per_keyword=20)
-```
-
-## 3. canonical 빈도 집계 + 시각화 (TODO)
-
-`corpus` 의 각 행 `keyword`(=form) → `name_df` 로 canonical 매핑 →
-`groupby(:canonical)` 빈도 → 상위 N개 막대 차트.
-"""
+# ╔═╡ b000000d-000d-4000-8000-00000000000d
+# form 전체를 키워드로 수집 — posts_per_keyword × form 수 만큼 요청
+corpus_df = let time
+    forms = unique(name_df.form)
+    @info "코퍼스 수집 시작..." n_forms=length(forms)
+    df = Corpus.collect(api, gallery_name, forms; posts_per_keyword=20)
+    @info "수집 완료" nrow=nrow(df)
+    df
+end
 
 # ╔═╡ Cell order:
 # ╟─b0000001-0001-4000-8000-000000000001
@@ -112,3 +110,4 @@ corpus = Corpus.collect(api, gallery_name, forms; posts_per_keyword=20)
 # ╟─b0000009-0009-4000-8000-000000000009
 # ╠═b000000b-000b-4000-8000-00000000000b
 # ╟─b000000c-000c-4000-8000-00000000000c
+# ╟─b000000d-000d-4000-8000-00000000000d
