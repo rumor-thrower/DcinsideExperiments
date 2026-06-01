@@ -111,7 +111,7 @@ freq_df = let
         :keyword => ByRow(k -> get(form2type,      k, :other))   => :entry_type,
     )
     deduped = unique(df, [:doc_id, :canonical])
-    sort(combine(groupby(deduped, [:canonical, :entry_type]), nrow => :n), :n; rev=true)
+    sort(combine(groupby(deduped, [:canonical, :entry_type]), nrow => :n), [:n]; rev=true)
 end
 
 # ╔═╡ b0000010-0010-4000-8000-00000000000f
