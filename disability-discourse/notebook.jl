@@ -25,7 +25,7 @@ begin
     let root = normpath(joinpath(@__DIR__, "..", "..")),
         have = keys(Pkg.project().dependencies),
         want = [("Dcinside", root),
-                ("DcinsideAnalysis", joinpath(root, "analysis"))],
+                ("DcinsideAnalysis", normpath(joinpath(root, "..", "DcinsideAnalysis")))],
         miss = [Pkg.PackageSpec(path = p) for (n, p) in want if !(n in have)]
         isempty(miss) || Pkg.develop(miss)
     end
@@ -74,7 +74,7 @@ const gallery_name = "genrenovel"
 # ╔═╡ fa9b0c1e-3d72-4a85-b6e8-2f5c8d1e0a34
 let time
 	# 공통 중립 어휘 + 이 실험 전용 어휘를 순서대로 로드
-	Kiwi.load_user_dict!(normpath(joinpath(@__DIR__, "..", "..", "analysis", "dict", "base.dict")))
+	Kiwi.load_user_dict!(DcinsideAnalysis.base_dict_path())
 	Kiwi.load_user_dict!(joinpath(@__DIR__, "vocab.dict"))
 end
 

@@ -25,7 +25,7 @@ begin
     let root = normpath(joinpath(@__DIR__, "..", "..")),
         have = keys(Pkg.project().dependencies),
         want = [("Dcinside", root),
-                ("DcinsideAnalysis", joinpath(root, "analysis"))],
+                ("DcinsideAnalysis", normpath(joinpath(root, "..", "DcinsideAnalysis")))],
         miss = [Pkg.PackageSpec(path = p) for (n, p) in want if !(n in have)]
         isempty(miss) || Pkg.develop(miss)
     end
@@ -45,14 +45,14 @@ md"""
 # 작가/작품 언급 빈도 분석
 
 genrenovel 갤러리에서 **작품 줄임말·웹소설 작가명** 단위로 언급 빈도를 집계한다.
-키워드는 `analysis/dict/base.dict` 의 고유명사 섹션에서 파생한다 (README 참고).
+키워드는 `DcinsideAnalysis` 패키지의 `dict/base.dict` 고유명사 섹션에서 파생한다 (README 참고).
 """
 
 # ╔═╡ b0000004-0004-4000-8000-000000000004
 const gallery_name = "genrenovel"
 
 # ╔═╡ b0000005-0005-4000-8000-000000000005
-const BASE_DICT = normpath(joinpath(@__DIR__, "..", "..", "analysis", "dict", "base.dict"))
+const BASE_DICT = DcinsideAnalysis.base_dict_path()
 
 # ╔═╡ b0000006-0006-4000-8000-000000000006
 @bind time Clock()
