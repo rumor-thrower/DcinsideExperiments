@@ -83,7 +83,7 @@ md"""
 """
 
 # ╔═╡ b000000b-000b-4000-8000-00000000000b
-name_df = NameDict.parse(BASE_DICT)
+name_df = NameDict.parse(BASE_DICT, joinpath(@__DIR__, "vocab.dict"))
 
 # ╔═╡ b000000c-000c-4000-8000-00000000000c
 md"## 2. 코퍼스 수집"
