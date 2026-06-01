@@ -98,6 +98,21 @@ corpus_df = let time
     df
 end
 
+# ╔═╡ b000000e-000e-4000-8000-00000000000e
+md"## 3. canonical 빈도 집계"
+
+# ╔═╡ b000000f-000f-4000-8000-00000000000f
+# keyword(=form) → canonical 매핑 후 집계
+freq_df = let
+    form2canonical = Dict(r.form => r.canonical for r in eachrow(name_df))
+    form2type      = Dict(r.form => r.entry_type for r in eachrow(name_df))
+    df = transform(corpus_df,
+        :keyword => ByRow(k -> get(form2canonical, k, k))        => :canonical,
+        :keyword => ByRow(k -> get(form2type,      k, :other))   => :entry_type,
+    )
+    sort(combine(groupby(df, [:canonical, :entry_type]), nrow => :n), :n; rev=true)
+end
+
 # ╔═╡ Cell order:
 # ╟─b0000001-0001-4000-8000-000000000001
 # ╠═b0000002-0002-4000-8000-000000000002
@@ -111,3 +126,5 @@ end
 # ╠═b000000b-000b-4000-8000-00000000000b
 # ╟─b000000c-000c-4000-8000-00000000000c
 # ╟─b000000d-000d-4000-8000-00000000000d
+# ╟─b000000e-000e-4000-8000-00000000000e
+# ╟─b000000f-000f-4000-8000-00000000000f
