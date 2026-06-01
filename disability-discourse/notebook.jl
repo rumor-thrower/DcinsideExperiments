@@ -40,6 +40,28 @@ begin
 	using DcinsideAnalysis   # Kiwi · Corpus · DcinsideDataFrames
 end
 
+# ╔═╡ aa000013-1301-4000-8000-000000000013
+begin
+	using HypertextLiteral
+
+	const DISABILITY_KEYWORDS = ["장애", "불구", "실명", "자폐", "치료", "극복", "클리셰", "영구 장애"]
+
+	const FRAME_VOCAB = Dict(
+		:gaming    => ["디버프", "스탯", "패널티", "약점", "너프", "능력치", "상태이상",
+		               "핸디캡", "제약", "쇠약", "디메리트", "마이너스"],
+		:catharsis => ["성장", "회복", "완치", "기적", "노력", "이겨냈", "딛고",
+		               "해냈", "역경", "강해", "각성", "시한부", "피폐"],
+		:sympathy  => ["불쌍", "감동", "안타깝", "가엾", "측은", "눈물", "비련",
+		               "가슴아프", "힘들", "애처롭", "불행", "고통"],
+		:critical  => ["재현", "고정관념", "차별", "편견", "서사", "비판",
+		               "문제적", "혐오", "장애인식", "의료화", "감동포르노"],
+	)
+
+	const KWIC_WINDOW = 40
+	const OUTPUT_DIR  = let d = joinpath(@__DIR__, "output"); mkpath(d); d end
+	md"상수 정의 완료 — 키워드 $(length(DISABILITY_KEYWORDS))개, 프레임 $(length(FRAME_VOCAB))종 | 출력: $(OUTPUT_DIR)"
+end
+
 # ╔═╡ d9be15e6-11d4-4e56-af91-99a60befe7ef
 const api = Dcinside.API()
 
@@ -68,28 +90,6 @@ let time
 	df = DcinsideDataFrames.to_dataframe(ch)
 	DcinsideDataFrames.parse_titles!(df, Kiwi.nouns)
 	df[!, [:id, :title, :morphemes]]
-end
-
-# ╔═╡ aa000013-1301-4000-8000-000000000013
-begin
-	using HypertextLiteral
-
-	const DISABILITY_KEYWORDS = ["장애", "불구", "실명", "자폐", "치료", "극복", "클리셰", "영구 장애"]
-
-	const FRAME_VOCAB = Dict(
-		:gaming    => ["디버프", "스탯", "패널티", "약점", "너프", "능력치", "상태이상",
-		               "핸디캡", "제약", "쇠약", "디메리트", "마이너스"],
-		:catharsis => ["성장", "회복", "완치", "기적", "노력", "이겨냈", "딛고",
-		               "해냈", "역경", "강해", "각성", "시한부", "피폐"],
-		:sympathy  => ["불쌍", "감동", "안타깝", "가엾", "측은", "눈물", "비련",
-		               "가슴아프", "힘들", "애처롭", "불행", "고통"],
-		:critical  => ["재현", "고정관념", "차별", "편견", "서사", "비판",
-		               "문제적", "혐오", "장애인식", "의료화", "감동포르노"],
-	)
-
-	const KWIC_WINDOW = 40
-	const OUTPUT_DIR  = let d = joinpath(@__DIR__, "output"); mkpath(d); d end
-	md"상수 정의 완료 — 키워드 $(length(DISABILITY_KEYWORDS))개, 프레임 $(length(FRAME_VOCAB))종 | 출력: $(OUTPUT_DIR)"
 end
 
 # ╔═╡ aa000015-1501-4000-8000-000000000015
