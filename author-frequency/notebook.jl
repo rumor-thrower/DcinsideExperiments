@@ -111,8 +111,52 @@ end
 # ╔═╡ b0000010-0010-4000-8000-00000000000f
 const OUTPUT_DIR = let d = joinpath(@__DIR__, "output"); mkpath(d); d end
 
+# ╔═╡ b0000015-0015-4000-8000-000000000015
+md"""
+## 4. author_id 분포 실험
+
+`author_id` 가 `nothing` 이면 비로그인(유동닉/반고닉), 값이 있으면 로그인 고정닉.
+
+- **anon_ratio**: 비로그인 행 비율
+- **oo_ratio**: author 가 `"ㅇㅇ"` 로 시작하는 행 비율 (반고닉 대리 지표)
+- **uid_collision**: 동일 author_id 가 서로 다른 author 문자열로 나타나는 케이스 수
+  (닉네임 변경 혹은 파싱 노이즈 탐지용)
+"""
+
+# ╔═╡ b0000016-0016-4000-8000-000000000016
+author_stats = let df = corpus_df
+    n        = nrow(df)
+    anon     = count(ismissing∘(x -> x === nothing ? missing : x), df.author_id)
+    anon_r   = round(count(isnothing, df.author_id) / n * 100; digits=1)
+    oo_r     = round(count(a -> startswith(a, "ㅇㅇ"), df.author) / n * 100; digits=1)
+
+    # uid → 서로 다른 author 문자열 수
+    uid_rows  = filter(r -> !isnothing(r.author_id), eachrow(df))
+    uid_nicks = Dict{String,Set{String}}()
+    for r in uid_rows
+        push!(get!(uid_nicks, r.author_id, Set{String}()), r.author)
+    end
+    collisions = count(v -> length(v) > 1, values(uid_nicks))
+
+    (;
+        total_rows   = n,
+        anon_pct     = anon_r,
+        oo_pct       = oo_r,
+        uid_collision_count = collisions,
+    )
+end
+
+# ╔═╡ b0000017-0017-4000-8000-000000000017
+# source_type 별 비로그인 비율
+anon_by_source = combine(
+    groupby(corpus_df, :source_type),
+    nrow                                              => :total,
+    :author_id => (v -> count(isnothing, v))          => :anon_n,
+    :author_id => (v -> round(count(isnothing,v)/length(v)*100; digits=1)) => :anon_pct,
+)
+
 # ╔═╡ b0000011-0011-4000-8000-000000000011
-md"## 4. 시각화"
+md"## 5. 시각화"
 
 # ╔═╡ b0000012-0012-4000-8000-000000000012
 # 상위 N 선택 슬라이더
@@ -155,6 +199,9 @@ end
 # ╟─b000000e-000e-4000-8000-00000000000e
 # ╟─b000000f-000f-4000-8000-00000000000f
 # ╟─b0000010-0010-4000-8000-00000000000f
+# ╟─b0000015-0015-4000-8000-000000000015
+# ╠═b0000016-0016-4000-8000-000000000016
+# ╠═b0000017-0017-4000-8000-000000000017
 # ╟─b0000011-0011-4000-8000-000000000011
 # ╠═b0000012-0012-4000-8000-000000000012
 # ╠═b0000013-0013-4000-8000-000000000013
