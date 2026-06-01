@@ -86,19 +86,90 @@ md"""
 name_df = NameDict.parse(BASE_DICT)
 
 # ╔═╡ b000000c-000c-4000-8000-00000000000c
-md"""
-## 2. 코퍼스 수집 (TODO)
+md"## 2. 코퍼스 수집"
 
-```julia
-forms  = unique(name_df.form)
-corpus = Corpus.collect(api, gallery_name, forms; posts_per_keyword=20)
-```
+# ╔═╡ b000000d-000d-4000-8000-00000000000d
+# form 전체를 키워드로 수집 — posts_per_keyword × form 수 만큼 요청
+corpus_df = let time
+    forms = unique(name_df.form)
+    @info "코퍼스 수집 시작..." n_forms=length(forms)
+    df = Corpus.collect(api, gallery_name, forms; posts_per_keyword=20)
+    @info "수집 완료" nrow=nrow(df)
+    df
+end
 
-## 3. canonical 빈도 집계 + 시각화 (TODO)
+# ╔═╡ b000000e-000e-4000-8000-00000000000e
+md"## 3. canonical 빈도 집계"
 
-`corpus` 의 각 행 `keyword`(=form) → `name_df` 로 canonical 매핑 →
-`groupby(:canonical)` 빈도 → 상위 N개 막대 차트.
-"""
+# ╔═╡ b000000f-000f-4000-8000-00000000000f
+# keyword(=form) → canonical 매핑 후 집계
+freq_df = let
+    form2canonical = Dict(r.form => r.canonical for r in eachrow(name_df))
+    form2type      = Dict(r.form => r.entry_type for r in eachrow(name_df))
+    df = transform(corpus_df,
+        :keyword => ByRow(k -> get(form2canonical, k, k))        => :canonical,
+        :keyword => ByRow(k -> get(form2type,      k, :other))   => :entry_type,
+    )
+    sort(combine(groupby(df, [:canonical, :entry_type]), nrow => :n), :n; rev=true)
+end
+
+# ╔═╡ b0000010-0010-4000-8000-00000000000f
+const OUTPUT_DIR = let d = joinpath(@__DIR__, "output"); mkpath(d); d end
+
+# ╔═╡ b0000011-0011-4000-8000-000000000011
+md"## 4. 시각화"
+
+# ╔═╡ b0000012-0012-4000-8000-000000000012
+# 상위 N 선택 슬라이더
+@bind top_n Slider(5:5:50; default=20, show_value=true)
+
+# ╔═╡ b0000013-0013-4000-8000-000000000013
+# entry_type 필터
+@bind filter_type Select(["all" => "전체", "work" => "작품", "author" => "작가", "other" => "기타"])
+
+# ╔═╡ b0000014-0014-4000-8000-000000000014
+# 상위 N 작품/작가 언급 빈도 막대 차트
+let
+    type_color = Dict("work" => "#4e79a7", "author" => "#f28e2b", "other" => "#bab0ac", "all" => "#59a14f")
+    sub = filter_type == "all" ? freq_df :
+          filter(r -> string(r.entry_type) == filter_type, freq_df)
+    top = first(sub, top_n)
+    isempty(top) && return HTML("<p style='font-family:sans-serif'>데이터 없음</p>")
+
+    labels = top.canonical
+    vals   = top.n
+    types  = string.(top.entry_type)
+    max_v  = max(maximum(vals), 1)
+    bar_w  = 28
+    W      = 80 + bar_w * length(labels)
+    H      = 320
+
+    rects = join(["""<g>
+  <rect x="$(60+(i-1)*bar_w)" y="$(H-60-round(Int,v/max_v*200))"
+        width="$(bar_w-3)" height="$(round(Int,v/max_v*200))"
+        fill="$(get(type_color, types[i], "#aaa"))" rx="2"/>
+  <text x="$(60+(i-1)*bar_w+(bar_w-3)÷2)" y="$(H-38)"
+        text-anchor="end" dominant-baseline="middle" font-size="11"
+        transform="rotate(-45 $(60+(i-1)*bar_w+(bar_w-3)÷2) $(H-38))">$(labels[i])</text>
+  <text x="$(60+(i-1)*bar_w+(bar_w-3)÷2)" y="$(H-64-round(Int,v/max_v*200))"
+        text-anchor="middle" font-size="10" fill="#333">$v</text>
+</g>""" for (i, v) in enumerate(vals)], "\n")
+
+    legend = join(["<g transform=\"translate($(W-130+i*55),12)\">
+  <rect width=\"12\" height=\"12\" fill=\"$(c)\" rx=\"2\"/>
+  <text x=\"16\" y=\"10\" font-size=\"11\">$(l)</text>
+</g>" for (i,(l,c)) in enumerate([("작품","#4e79a7"),("작가","#f28e2b"),("기타","#bab0ac")])], "\n")
+
+    svg = """<svg xmlns="http://www.w3.org/2000/svg" width="$W" height="$H" style="font-family:sans-serif;overflow:visible">
+$legend
+$rects</svg>"""
+    fname = "01_author_freq_top$(top_n)_$(filter_type).svg"
+    write(joinpath(OUTPUT_DIR, fname), svg)
+    HTML("""<div>
+        <h4 style="font-family:sans-serif;margin:8px 0">언급 빈도 Top-$(length(vals)) (필터: $(filter_type))</h4>
+        $svg
+    </div>""")
+end
 
 # ╔═╡ Cell order:
 # ╟─b0000001-0001-4000-8000-000000000001
@@ -112,3 +183,11 @@ corpus = Corpus.collect(api, gallery_name, forms; posts_per_keyword=20)
 # ╟─b0000009-0009-4000-8000-000000000009
 # ╠═b000000b-000b-4000-8000-00000000000b
 # ╟─b000000c-000c-4000-8000-00000000000c
+# ╟─b000000d-000d-4000-8000-00000000000d
+# ╟─b000000e-000e-4000-8000-00000000000e
+# ╟─b000000f-000f-4000-8000-00000000000f
+# ╟─b0000010-0010-4000-8000-00000000000f
+# ╟─b0000011-0011-4000-8000-000000000011
+# ╠═b0000012-0012-4000-8000-000000000012
+# ╠═b0000013-0013-4000-8000-000000000013
+# ╟─b0000014-0014-4000-8000-000000000014
