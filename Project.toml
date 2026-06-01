@@ -8,8 +8,8 @@ PlutoUI = "7f904dfe-b85e-4ff6-b463-dae2292396a8"
 Unicode = "4ec0a83e-493e-50e2-b9ac-8f72acf5a8f5"
 
 [sources]
-Dcinside = {path = ".."}
-DcinsideAnalysis = {path = "../../DcinsideAnalysis"}
+Dcinside = {url = "https://github.com/rumor-thrower/Dcinside.jl"}
+DcinsideAnalysis = {url = "https://github.com/rumor-thrower/DcinsideAnalysis.jl"}
 
 [compat]
 DataFrames = "~1"

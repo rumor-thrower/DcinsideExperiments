@@ -19,16 +19,10 @@ end
 # ╔═╡ a1f3c2d0-0001-4000-8000-000000000001
 begin
     import Pkg
-    Pkg.activate(joinpath(@__DIR__, ".."))   # experiments/ 공유 환경
+    Pkg.activate(joinpath(@__DIR__, ".."))   # 저장소 공유 환경
 
-    # 로컬 패키지(Dcinside, DcinsideAnalysis)를 dev 모드로 설치 (최초 1회).
-    let root = normpath(joinpath(@__DIR__, "..", "..")),
-        have = keys(Pkg.project().dependencies),
-        want = [("Dcinside", root),
-                ("DcinsideAnalysis", normpath(joinpath(root, "..", "DcinsideAnalysis")))],
-        miss = [Pkg.PackageSpec(path = p) for (n, p) in want if !(n in have)]
-        isempty(miss) || Pkg.develop(miss)
-    end
+    # Dcinside·DcinsideAnalysis 는 Project.toml [sources] 에 Git URL 로
+    # 선언돼 있어 instantiate 시 자동으로 받아온다.
     Pkg.instantiate()
 end
 
