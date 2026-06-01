@@ -37,7 +37,7 @@ begin
 	using PlutoUI
 	using DataFrames
 	using Dcinside
-	using DcinsideAnalysis   # Kiwi · Corpus · DcinsideDataFrames
+	using DcinsideAnalysis   # Kiwi · Corpus · DcinsideDataFrames · Charts
 end
 
 # ╔═╡ aa000013-1301-4000-8000-000000000013
@@ -213,25 +213,11 @@ end
 # ╔═╡ aa000019-1901-4000-8000-000000000019
 # 키워드 빈도 막대 차트
 let
-	freq  = sort(combine(groupby(corpus_nlp, :keyword), nrow => :n), :n; rev=true)
-	labels = freq.keyword
-	vals   = freq.n
-	max_v  = max(maximum(vals), 1)
-	W, H   = 620, 280
-	bar_w  = (W - 80) ÷ length(labels)
-
-	rects = join(["""<g>
-	  <rect x="$(60+(i-1)*bar_w)" y="$(H-50-round(Int,v/max_v*180))"
-	        width="$(bar_w-4)" height="$(round(Int,v/max_v*180))" fill="#4e79a7" rx="2"/>
-	  <text x="$(60+(i-1)*bar_w+bar_w÷2)" y="$(H-32)"
-	        text-anchor="middle" font-size="12">$(labels[i])</text>
-	  <text x="$(60+(i-1)*bar_w+bar_w÷2)" y="$(H-54-round(Int,v/max_v*180))"
-	        text-anchor="middle" font-size="11" fill="#333">$(v)</text>
-	</g>""" for (i,v) in enumerate(vals)], "\n")
-
-	svg = """<svg xmlns="http://www.w3.org/2000/svg" width="$W" height="$H" style="font-family:sans-serif;overflow:visible">$rects</svg>"""
-	write(joinpath(OUTPUT_DIR, "01_keyword_freq.svg"), svg)
-	HTML("""<div><h4 style="font-family:sans-serif;margin:8px 0">키워드별 수집 행 수 (제목·본문·댓글 합산)</h4>$svg</div>""")
+	freq = sort(combine(groupby(corpus_nlp, :keyword), nrow => :n), :n; rev=true)
+	Charts.barchart(freq.keyword, freq.n;
+		width=620, height=280,
+		title="키워드별 수집 행 수 (제목·본문·댓글 합산)",
+		outfile=joinpath(OUTPUT_DIR, "01_keyword_freq.svg"))
 end
 
 # ╔═╡ aa000020-2001-4000-8000-000000000020
@@ -254,22 +240,10 @@ let
 	if isempty(present)
 		HTML("<p style='font-family:sans-serif'>데이터 없음</p>")
 	else
-		max_v = max(maximum(x[2] for x in present), 1)
-		W, H  = 560, 280
-		bar_w = (W - 80) ÷ length(present)
-
-		rects = join(["""<g>
-		  <rect x="$(60+(i-1)*bar_w)" y="$(H-50-round(Int,v/max_v*180))"
-		        width="$(bar_w-6)" height="$(round(Int,v/max_v*180))" fill="$c" rx="2"/>
-		  <text x="$(60+(i-1)*bar_w+(bar_w-6)÷2)" y="$(H-32)"
-		        text-anchor="middle" font-size="12">$l</text>
-		  <text x="$(60+(i-1)*bar_w+(bar_w-6)÷2)" y="$(H-54-round(Int,v/max_v*180))"
-		        text-anchor="middle" font-size="11" fill="#333">$v</text>
-		</g>""" for (i,(l,v,c)) in enumerate(present)], "\n")
-
-		svg = """<svg xmlns="http://www.w3.org/2000/svg" width="$W" height="$H" style="font-family:sans-serif;overflow:visible">$rects</svg>"""
-		write(joinpath(OUTPUT_DIR, "02_frame_dist.svg"), svg)
-		HTML("""<div><h4 style="font-family:sans-serif;margin:8px 0">프레임 분포</h4>$svg</div>""")
+		Charts.barchart([x[1] for x in present], [x[2] for x in present];
+			colors=[x[3] for x in present], width=560, height=280,
+			title="프레임 분포",
+			outfile=joinpath(OUTPUT_DIR, "02_frame_dist.svg"))
 	end
 end
 
@@ -311,25 +285,10 @@ end
 let
 	critical_n    = count(r -> r.frame == :critical, eachrow(corpus_nlp))
 	noncritical_n = count(r -> r.frame in (:gaming, :catharsis, :sympathy), eachrow(corpus_nlp))
-	labels = ["비판적 담론", "비비판적 담론 합계"]
-	vals   = [critical_n, noncritical_n]
-	colors = ["#4e79a7", "#e15759"]
-	max_v  = max(maximum(vals), 1)
-	W, H   = 360, 260
-	bar_w  = (W - 80) ÷ 2
-
-	rects = join(["""<g>
-	  <rect x="$(60+(i-1)*(bar_w+10))" y="$(H-50-round(Int,v/max_v*160))"
-	        width="$bar_w" height="$(round(Int,v/max_v*160))" fill="$(colors[i])" rx="2"/>
-	  <text x="$(60+(i-1)*(bar_w+10)+bar_w÷2)" y="$(H-30)"
-	        text-anchor="middle" font-size="12">$(labels[i])</text>
-	  <text x="$(60+(i-1)*(bar_w+10)+bar_w÷2)" y="$(H-54-round(Int,v/max_v*160))"
-	        text-anchor="middle" font-size="13" font-weight="bold">$v</text>
-	</g>""" for (i,v) in enumerate(vals)], "\n")
-
-	svg = """<svg xmlns="http://www.w3.org/2000/svg" width="$W" height="$H" style="font-family:sans-serif;overflow:visible">$rects</svg>"""
-	write(joinpath(OUTPUT_DIR, "04_critical_absence.svg"), svg)
-	HTML("""<div><h4 style="font-family:sans-serif;margin:8px 0">비판적 담론 부재 시각화</h4>$svg</div>""")
+	Charts.barchart(["비판적 담론", "비비판적 담론 합계"], [critical_n, noncritical_n];
+		colors=["#4e79a7", "#e15759"], width=360, height=260, bar_w=143, gap=10,
+		bold_values=true, title="비판적 담론 부재 시각화",
+		outfile=joinpath(OUTPUT_DIR, "04_critical_absence.svg"))
 end
 
 # ╔═╡ aa000023-2301-4000-8000-000000000023
